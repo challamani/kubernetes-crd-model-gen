@@ -1,0 +1,916 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ingressgateways.gateway.tsb.tetrate.io
+spec:
+  group: gateway.tsb.tetrate.io
+  names:
+    categories:
+      - tetrate-io
+      - tsb-tetrate-io
+      - gateway-tsb-tetrate-io
+    kind: IngressGateway
+    listKind: IngressGatewayList
+    plural: ingressgateways
+    shortNames:
+      - tig
+    singular: ingressgateway
+  scope: Namespaced
+  versions:
+    - additionalPrinterColumns:
+        - jsonPath: .metadata.annotations['tsb\.tetrate\.io\/gatewayGroup']
+          name: Gateway-Group
+          type: string
+        - jsonPath: .metadata.annotations['tsb\.tetrate\.io\/workspace']
+          name: Workspace
+          type: string
+        - jsonPath: .metadata.annotations['tsb\.tetrate\.io\/tenant']
+          name: Tenant
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v2
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              description: '`IngressGateway` configures a workload to act as an ingress gateway into the mesh.'
+              properties:
+                description:
+                  description: A description of the resource.
+                  type: string
+                displayName:
+                  description: User friendly name for the resource.
+                  type: string
+                etag:
+                  description: The etag for the resource.
+                  type: string
+                extension:
+                  items:
+                    properties:
+                      config:
+                        description: Configuration parameters sent to the WASM plugin execution.
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      fqn:
+                        description: Fqn of the extension to be executed.
+                        type: string
+                    type: object
+                  type: array
+                fqn:
+                  description: Fully-qualified name of the resource.
+                  type: string
+                http:
+                  description: One or more HTTP or HTTPS servers exposed by the gateway.
+                  items:
+                    properties:
+                      authentication:
+                        description: Configuration to authenticate clients.
+                        oneOf:
+                          - not:
+                              anyOf:
+                                - properties:
+                                    jwt:
+                                      oneOf:
+                                        - not:
+                                            anyOf:
+                                              - required:
+                                                  - jwksUri
+                                              - required:
+                                                  - jwks
+                                        - required:
+                                            - jwksUri
+                                        - required:
+                                            - jwks
+                                  required:
+                                    - jwt
+                          - properties:
+                              jwt:
+                                oneOf:
+                                  - not:
+                                      anyOf:
+                                        - required:
+                                            - jwksUri
+                                        - required:
+                                            - jwks
+                                  - required:
+                                      - jwksUri
+                                  - required:
+                                      - jwks
+                            required:
+                              - jwt
+                        properties:
+                          jwt:
+                            properties:
+                              audiences:
+                                items:
+                                  type: string
+                                type: array
+                              issuer:
+                                description: Identifies the issuer that issued the JWT.
+                                type: string
+                              jwks:
+                                description: JSON Web Key Set of public keys to validate signature of the JWT.
+                                type: string
+                              jwksUri:
+                                type: string
+                            type: object
+                        type: object
+                      authorization:
+                        description: Configuration to authorize a request.
+                        oneOf:
+                          - not:
+                              anyOf:
+                                - required:
+                                    - external
+                                - required:
+                                    - local
+                          - required:
+                              - external
+                          - required:
+                              - local
+                        properties:
+                          external:
+                            properties:
+                              includeRequestHeaders:
+                                items:
+                                  type: string
+                                type: array
+                              tls:
+                                oneOf:
+                                  - not:
+                                      anyOf:
+                                        - required:
+                                            - files
+                                  - required:
+                                      - files
+                                properties:
+                                  files:
+                                    properties:
+                                      caCertificates:
+                                        type: string
+                                      clientCertificate:
+                                        description: Certificate file to authenticate the client.
+                                        type: string
+                                      privateKey:
+                                        description: Private key file associated with the client certificate.
+                                        type: string
+                                    type: object
+                                  mode:
+                                    enum:
+                                      - DISABLED
+                                      - SIMPLE
+                                      - MUTUAL
+                                    type: string
+                                  subjectAltNames:
+                                    items:
+                                      type: string
+                                    type: array
+                                type: object
+                              uri:
+                                type: string
+                            type: object
+                          local:
+                            properties:
+                              rules:
+                                items:
+                                  properties:
+                                    from:
+                                      items:
+                                        properties:
+                                          jwt:
+                                            description: JWT configuration to identity the subject.
+                                            properties:
+                                              iss:
+                                                type: string
+                                              other:
+                                                additionalProperties:
+                                                  type: string
+                                                description: A set of arbitrary claims that are required to qualify the subject.
+                                                type: object
+                                              sub:
+                                                type: string
+                                            type: object
+                                        type: object
+                                      type: array
+                                    name:
+                                      description: A friendly name to identify the binding.
+                                      type: string
+                                    to:
+                                      items:
+                                        properties:
+                                          methods:
+                                            description: The HTTP methods that are allowed by this rule.
+                                            items:
+                                              type: string
+                                            type: array
+                                          paths:
+                                            description: The request path where the request is made against.
+                                            items:
+                                              type: string
+                                            type: array
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                            type: object
+                        type: object
+                      hostname:
+                        description: Hostname with which the service can be expected to be accessed by clients.
+                        type: string
+                      name:
+                        description: A name assigned to the server.
+                        type: string
+                      port:
+                        description: The port where the server is exposed.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                      rateLimiting:
+                        description: Configuration for rate limiting requests.
+                        oneOf:
+                          - not:
+                              anyOf:
+                                - required:
+                                    - settings
+                                - required:
+                                    - externalService
+                          - required:
+                              - settings
+                          - required:
+                              - externalService
+                        properties:
+                          externalService:
+                            description: Configure ratelimiting using an external ratelimit server.
+                            properties:
+                              domain:
+                                description: The rate limit domain to use when calling the rate limit service.
+                                type: string
+                              failClosed:
+                                type: boolean
+                              rateLimitServerUri:
+                                description: The URI at which the external rate limit server can be reached.
+                                type: string
+                              rules:
+                                description: A set of rate limit rules.
+                                items:
+                                  properties:
+                                    dimensions:
+                                      description: A list of dimensions that are to be applied for this rate limit configuration.
+                                      items:
+                                        oneOf:
+                                          - not:
+                                              anyOf:
+                                                - required:
+                                                    - sourceCluster
+                                                - required:
+                                                    - destinationCluster
+                                                - required:
+                                                    - remoteAddress
+                                                - required:
+                                                    - requestHeaders
+                                                - required:
+                                                    - headerValueMatch
+                                          - required:
+                                              - sourceCluster
+                                          - required:
+                                              - destinationCluster
+                                          - required:
+                                              - remoteAddress
+                                          - required:
+                                              - requestHeaders
+                                          - required:
+                                              - headerValueMatch
+                                        properties:
+                                          destinationCluster:
+                                            description: Rate limit on destination envoy cluster.
+                                            type: object
+                                          headerValueMatch:
+                                            description: Rate limit on the existence of certain request headers.
+                                            properties:
+                                              descriptorValue:
+                                                description: The value to use in the descriptor entry.
+                                                type: string
+                                              headers:
+                                                additionalProperties:
+                                                  oneOf:
+                                                    - not:
+                                                        anyOf:
+                                                          - required:
+                                                              - exact
+                                                          - required:
+                                                              - prefix
+                                                          - required:
+                                                              - regex
+                                                    - required:
+                                                        - exact
+                                                    - required:
+                                                        - prefix
+                                                    - required:
+                                                        - regex
+                                                  properties:
+                                                    exact:
+                                                      description: Exact string match.
+                                                      type: string
+                                                    prefix:
+                                                      description: Prefix-based match.
+                                                      type: string
+                                                    regex:
+                                                      description: ECMAscript style regex-based match.
+                                                      type: string
+                                                  type: object
+                                                type: object
+                                            type: object
+                                          remoteAddress:
+                                            description: Rate limit on remote address of client.
+                                            type: object
+                                          requestHeaders:
+                                            description: Rate limit on the value of certain request headers.
+                                            properties:
+                                              descriptorKey:
+                                                description: The key to use in the descriptor entry.
+                                                type: string
+                                              headerName:
+                                                description: The header name to be queried from the request headers.
+                                                type: string
+                                            type: object
+                                          sourceCluster:
+                                            description: Rate limit on source envoy cluster.
+                                            type: object
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                              timeout:
+                                description: The timeout in seconds for the external rate limit server RPC.
+                                type: string
+                              tls:
+                                oneOf:
+                                  - not:
+                                      anyOf:
+                                        - required:
+                                            - files
+                                  - required:
+                                      - files
+                                properties:
+                                  files:
+                                    properties:
+                                      caCertificates:
+                                        type: string
+                                      clientCertificate:
+                                        description: Certificate file to authenticate the client.
+                                        type: string
+                                      privateKey:
+                                        description: Private key file associated with the client certificate.
+                                        type: string
+                                    type: object
+                                  mode:
+                                    enum:
+                                      - DISABLED
+                                      - SIMPLE
+                                      - MUTUAL
+                                    type: string
+                                  subjectAltNames:
+                                    items:
+                                      type: string
+                                    type: array
+                                type: object
+                            type: object
+                          settings:
+                            properties:
+                              failClosed:
+                                type: boolean
+                              rules:
+                                description: A list of rules for ratelimiting.
+                                items:
+                                  properties:
+                                    dimensions:
+                                      description: A list of dimensions to define each ratelimit rule.
+                                      items:
+                                        oneOf:
+                                          - not:
+                                              anyOf:
+                                                - required:
+                                                    - remoteAddress
+                                                - required:
+                                                    - header
+                                          - required:
+                                              - remoteAddress
+                                          - required:
+                                              - header
+                                        properties:
+                                          header:
+                                            description: Rate limit on certain HTTP headers.
+                                            properties:
+                                              name:
+                                                description: Name of the header to match on.
+                                                type: string
+                                              value:
+                                                description: Value of the header to match on if matching on a specific value.
+                                                oneOf:
+                                                  - not:
+                                                      anyOf:
+                                                        - required:
+                                                            - exact
+                                                        - required:
+                                                            - prefix
+                                                        - required:
+                                                            - regex
+                                                  - required:
+                                                      - exact
+                                                  - required:
+                                                      - prefix
+                                                  - required:
+                                                      - regex
+                                                properties:
+                                                  exact:
+                                                    description: Exact string match.
+                                                    type: string
+                                                  prefix:
+                                                    description: Prefix-based match.
+                                                    type: string
+                                                  regex:
+                                                    description: ECMAscript style regex-based match.
+                                                    type: string
+                                                type: object
+                                            type: object
+                                          remoteAddress:
+                                            description: Rate limit on the remote address of client.
+                                            properties:
+                                              value:
+                                                description: Ratelimit on a specific remote address.
+                                                type: string
+                                            type: object
+                                        type: object
+                                      type: array
+                                    limit:
+                                      description: The ratelimit value that will be configured for the above rules.
+                                      properties:
+                                        requestsPerUnit:
+                                          description: Specifies the value of the rate limit.
+                                          maximum: 4294967295
+                                          minimum: 0
+                                          type: integer
+                                        unit:
+                                          description: Specifies the unit of time for rate limit.
+                                          enum:
+                                            - UNKNOWN
+                                            - SECOND
+                                            - MINUTE
+                                            - HOUR
+                                            - DAY
+                                          type: string
+                                      type: object
+                                  type: object
+                                type: array
+                              timeout:
+                                description: The timeout in seconds for the rate limit server RPC.
+                                type: string
+                            type: object
+                        type: object
+                      routing:
+                        description: Routing rules associated with HTTP traffic to this service.
+                        properties:
+                          corsPolicy:
+                            description: Cross origin resource request policy settings for all routes.
+                            properties:
+                              allowCredentials:
+                                nullable: true
+                                type: boolean
+                              allowHeaders:
+                                description: List of HTTP headers that can be used when requesting the resource.
+                                items:
+                                  type: string
+                                type: array
+                              allowMethods:
+                                description: List of HTTP methods allowed to access the resource.
+                                items:
+                                  type: string
+                                type: array
+                              allowOrigin:
+                                description: The list of origins that are allowed to perform CORS requests.
+                                items:
+                                  type: string
+                                type: array
+                              exposeHeaders:
+                                description: A white list of HTTP headers that the browsers are allowed to access.
+                                items:
+                                  type: string
+                                type: array
+                              maxAge:
+                                description: Specifies how long the results of a preflight request can be cached.
+                                type: string
+                            type: object
+                          rules:
+                            description: HTTP routes.
+                            items:
+                              oneOf:
+                                - not:
+                                    anyOf:
+                                      - required:
+                                          - route
+                                      - required:
+                                          - redirect
+                                - required:
+                                    - route
+                                - required:
+                                    - redirect
+                              properties:
+                                match:
+                                  description: One or more match conditions (OR-ed).
+                                  items:
+                                    properties:
+                                      headers:
+                                        additionalProperties:
+                                          oneOf:
+                                            - not:
+                                                anyOf:
+                                                  - required:
+                                                      - exact
+                                                  - required:
+                                                      - prefix
+                                                  - required:
+                                                      - regex
+                                            - required:
+                                                - exact
+                                            - required:
+                                                - prefix
+                                            - required:
+                                                - regex
+                                          properties:
+                                            exact:
+                                              description: Exact string match.
+                                              type: string
+                                            prefix:
+                                              description: Prefix-based match.
+                                              type: string
+                                            regex:
+                                              description: ECMAscript style regex-based match.
+                                              type: string
+                                          type: object
+                                        description: The header keys must be lowercase and use hyphen as the separator, e.g.
+                                        type: object
+                                      uri:
+                                        description: URI to match.
+                                        oneOf:
+                                          - not:
+                                              anyOf:
+                                                - required:
+                                                    - exact
+                                                - required:
+                                                    - prefix
+                                                - required:
+                                                    - regex
+                                          - required:
+                                              - exact
+                                          - required:
+                                              - prefix
+                                          - required:
+                                              - regex
+                                        properties:
+                                          exact:
+                                            description: Exact string match.
+                                            type: string
+                                          prefix:
+                                            description: Prefix-based match.
+                                            type: string
+                                          regex:
+                                            description: ECMAscript style regex-based match.
+                                            type: string
+                                        type: object
+                                    type: object
+                                  type: array
+                                modify:
+                                  description: One or more mutations to be performed before forwarding.
+                                  properties:
+                                    headers:
+                                      description: Add/remove/overwrite one or more HTTP headers in a request or response.
+                                      properties:
+                                        request:
+                                          description: Header manipulation rules to apply before forwarding a request to the destination service.
+                                          properties:
+                                            add:
+                                              additionalProperties:
+                                                type: string
+                                              type: object
+                                            remove:
+                                              description: Remove a the specified headers.
+                                              items:
+                                                type: string
+                                              type: array
+                                            set:
+                                              additionalProperties:
+                                                type: string
+                                              description: Overwrite the headers specified by key with the given values.
+                                              type: object
+                                          type: object
+                                        response:
+                                          description: Header manipulation rules to apply before returning a response to the caller.
+                                          properties:
+                                            add:
+                                              additionalProperties:
+                                                type: string
+                                              type: object
+                                            remove:
+                                              description: Remove a the specified headers.
+                                              items:
+                                                type: string
+                                              type: array
+                                            set:
+                                              additionalProperties:
+                                                type: string
+                                              description: Overwrite the headers specified by key with the given values.
+                                              type: object
+                                          type: object
+                                      type: object
+                                    rewrite:
+                                      description: Rewrite the HTTP Host or URL or both.
+                                      properties:
+                                        authority:
+                                          description: Rewrite the Authority/Host header with this value.
+                                          type: string
+                                        uri:
+                                          description: Rewrite the path (or the prefix) portion of the URI with this value.
+                                          type: string
+                                      type: object
+                                  type: object
+                                redirect:
+                                  description: Redirect the request to a different host or URL or both.
+                                  properties:
+                                    authority:
+                                      description: On a redirect, overwrite the Authority/Host portion of the URL with this value.
+                                      type: string
+                                    port:
+                                      maximum: 4294967295
+                                      minimum: 0
+                                      type: integer
+                                    redirectCode:
+                                      maximum: 4294967295
+                                      minimum: 0
+                                      type: integer
+                                    scheme:
+                                      description: On a redirect, overwrite the scheme with this one.
+                                      type: string
+                                    uri:
+                                      description: On a redirect, overwrite the Path portion of the URL with this value.
+                                      type: string
+                                  type: object
+                                route:
+                                  description: Forward the request to the specified destination(s).
+                                  properties:
+                                    host:
+                                      type: string
+                                    port:
+                                      description: The port on the service to forward the request to.
+                                      maximum: 4294967295
+                                      minimum: 0
+                                      type: integer
+                                  type: object
+                              type: object
+                            type: array
+                        type: object
+                      tls:
+                        description: TLS certificate info.
+                        properties:
+                          files:
+                            properties:
+                              caCertificates:
+                                type: string
+                              privateKey:
+                                type: string
+                              serverCertificate:
+                                type: string
+                            type: object
+                          mode:
+                            enum:
+                              - DISABLED
+                              - SIMPLE
+                              - MUTUAL
+                            type: string
+                          secretName:
+                            type: string
+                        type: object
+                      xxxOldAuthentication:
+                        oneOf:
+                          - not:
+                              anyOf:
+                                - properties:
+                                    jwt:
+                                      oneOf:
+                                        - not:
+                                            anyOf:
+                                              - required:
+                                                  - jwksUri
+                                              - required:
+                                                  - jwks
+                                        - required:
+                                            - jwksUri
+                                        - required:
+                                            - jwks
+                                  required:
+                                    - jwt
+                          - properties:
+                              jwt:
+                                oneOf:
+                                  - not:
+                                      anyOf:
+                                        - required:
+                                            - jwksUri
+                                        - required:
+                                            - jwks
+                                  - required:
+                                      - jwksUri
+                                  - required:
+                                      - jwks
+                            required:
+                              - jwt
+                        properties:
+                          jwt:
+                            properties:
+                              audiences:
+                                items:
+                                  type: string
+                                type: array
+                              issuer:
+                                description: Identifies the issuer that issued the JWT.
+                                type: string
+                              jwks:
+                                description: JSON Web Key Set of public keys to validate signature of the JWT.
+                                type: string
+                              jwksUri:
+                                type: string
+                            type: object
+                        type: object
+                      xxxOldAuthorization:
+                        oneOf:
+                          - not:
+                              anyOf:
+                                - required:
+                                    - external
+                                - required:
+                                    - local
+                          - required:
+                              - external
+                          - required:
+                              - local
+                        properties:
+                          external:
+                            properties:
+                              includeRequestHeaders:
+                                items:
+                                  type: string
+                                type: array
+                              uri:
+                                type: string
+                            type: object
+                          local:
+                            properties:
+                              rules:
+                                items:
+                                  properties:
+                                    from:
+                                      items:
+                                        properties:
+                                          jwt:
+                                            description: JWT configuration to identity the subject.
+                                            properties:
+                                              iss:
+                                                type: string
+                                              other:
+                                                additionalProperties:
+                                                  type: string
+                                                description: A set of arbitrary claims that are required to qualify the subject.
+                                                type: object
+                                              sub:
+                                                type: string
+                                            type: object
+                                        type: object
+                                      type: array
+                                    name:
+                                      description: A friendly name to identify the binding.
+                                      type: string
+                                    to:
+                                      items:
+                                        properties:
+                                          methods:
+                                            description: The HTTP methods that are allowed by this rule.
+                                            items:
+                                              type: string
+                                            type: array
+                                          paths:
+                                            description: The request path where the request is made against.
+                                            items:
+                                              type: string
+                                            type: array
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                            type: object
+                        type: object
+                    type: object
+                  type: array
+                tcp:
+                  items:
+                    properties:
+                      hostname:
+                        description: Hostname to identify the service.
+                        type: string
+                      name:
+                        description: A name assigned to the server.
+                        type: string
+                      port:
+                        description: The port where the server is exposed.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                      route:
+                        description: Forward the connection to the specified destination.
+                        properties:
+                          host:
+                            type: string
+                          port:
+                            description: The port on the service to forward the request to.
+                            maximum: 4294967295
+                            minimum: 0
+                            type: integer
+                        type: object
+                      tls:
+                        properties:
+                          files:
+                            properties:
+                              caCertificates:
+                                type: string
+                              privateKey:
+                                type: string
+                              serverCertificate:
+                                type: string
+                            type: object
+                          mode:
+                            enum:
+                              - DISABLED
+                              - SIMPLE
+                              - MUTUAL
+                            type: string
+                          secretName:
+                            type: string
+                        type: object
+                    type: object
+                  type: array
+                tlsPassthrough:
+                  description: One or more TLS servers exposed by the gateway.
+                  items:
+                    properties:
+                      hostname:
+                        description: Hostname with which the service can be expected to be accessed by clients.
+                        type: string
+                      name:
+                        description: A name assigned to the server.
+                        type: string
+                      port:
+                        description: The port where the server is exposed.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                      route:
+                        description: Forward the connection to the specified destination.
+                        properties:
+                          host:
+                            type: string
+                          port:
+                            description: The port on the service to forward the request to.
+                            maximum: 4294967295
+                            minimum: 0
+                            type: integer
+                        type: object
+                    type: object
+                  type: array
+                waf:
+                  description: WAF settings to be enabled for traffic passing through the HttpServer.
+                  properties:
+                    rules:
+                      description: Rules to be leveraged by WAF.
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                workloadSelector:
+                  properties:
+                    labels:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    namespace:
+                      description: The namespace where the workload resides.
+                      type: string
+                  type: object
+              type: object
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}

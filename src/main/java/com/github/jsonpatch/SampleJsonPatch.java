@@ -33,7 +33,6 @@ public class SampleJsonPatch {
         logger.info("Json Format: \n" + jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj));
 
         List<Patch> patchList = getPatches();
-
         JsonPatch jsonPatch = JsonPatch.fromJson(jsonMapper.readTree(jsonMapper.writeValueAsString(patchList)));
         logger.info("patch details: \n"+jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonPatch));
 

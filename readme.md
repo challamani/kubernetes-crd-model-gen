@@ -1,5 +1,11 @@
 
-### Manifest generation using `ghcr.io/kubernetes-client/java/crd-model-gen` docker image
+## Kubernetes CRD Generation
+
+### Generate using crd-model-gen docker images
+
+The `ghcr.io/kubernetes-client/java/crd-model-gen` docker image, excepts the respective CRDs `openAPIV3Schema` 
+
+#### Manifest generation using `ghcr.io/kubernetes-client/java/crd-model-gen` docker image
 ```shell
 LOCAL_MANIFEST_FILE=/Users/mani/workspace/kubernetes-crd-model-gen/src/main/resources/tetrate-crd.yaml
 docker run \
@@ -17,7 +23,9 @@ docker run \
   -o "$(pwd)"
 ```
 
-### Json/Yaml patch using `json-patch` lib
+### Generate using json-patch
+
+#### Json/Yaml patch using `json-patch` lib
 
 An example yaml resource before applying the patch
 

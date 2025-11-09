@@ -3,7 +3,7 @@
 
 ### Generate using crd-model-gen docker images
 
-The `ghcr.io/kubernetes-client/java/crd-model-gen` docker image, excepts the respective CRDs `openAPIV3Schema` 
+The `ghcr.io/kubernetes-client/java/crd-model-gen` Docker image, it requires the respective CRDs and `openAPIV3Schema`. 
 
 #### Manifest generation using `ghcr.io/kubernetes-client/java/crd-model-gen` docker image
 ```shell
